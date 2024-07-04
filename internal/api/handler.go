@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/vokinneberg/go-url-shortener-ddd/internal/repository"
 	shortURL "github.com/vokinneberg/go-url-shortener-ddd/url"
 )
 
@@ -16,9 +15,8 @@ type Handler struct {
 }
 
 func NewHandler() *http.ServeMux {
-	repo := repository.NewInMemoryURLRepository()
 	handler := &Handler{
-		urlService: shortURL.NewURLService(repo),
+		urlService: shortURL.NewURLService(),
 	}
 
 	mux := http.NewServeMux()
