@@ -9,10 +9,10 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func computeShort(original string) string {
+func computeShort(original string) (string, error) {
 	h := sha1.New()
 	h.Write([]byte(original))
-	return hex.EncodeToString(h.Sum(nil))[:8]
+	return hex.EncodeToString(h.Sum(nil))[:8], nil
 }
 
 func TestURLService_Shorten_Success(t *testing.T) {
@@ -22,10 +22,13 @@ func TestURLService_Shorten_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := NewMockURLReaderWriter(ctrl)
-	svc := NewURLService(mockRepo)
+	svc := NewURLService(mockRepo, computeShort)
 
 	original := "https://example.com/a"
-	expectedID := computeShort(original)
+	expectedID, err := computeShort(original)
+	if err != nil {
+		t.Fatalf("computeShort() unexpected error: %v", err)
+	}
 
 	mockRepo.
 		EXPECT().
@@ -66,7 +69,7 @@ func TestURLService_Shorten_SaveError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := NewMockURLReaderWriter(ctrl)
-	svc := NewURLService(mockRepo)
+	svc := NewURLService(mockRepo, computeShort)
 
 	original := "https://example.com/error"
 	saveErr := errors.New("save failed")
@@ -93,7 +96,7 @@ func TestURLService_Retrieve_Success(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := NewMockURLReaderWriter(ctrl)
-	svc := NewURLService(mockRepo)
+	svc := NewURLService(mockRepo, computeShort)
 
 	id := "abc12345"
 	expected := &URL{ID: id, Original: "https://example.com/x"}
@@ -123,7 +126,7 @@ func TestURLService_Retrieve_GetError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockRepo := NewMockURLReaderWriter(ctrl)
-	svc := NewURLService(mockRepo)
+	svc := NewURLService(mockRepo, computeShort)
 
 	id := "deadbeef"
 	getErr := errors.New("not found")
