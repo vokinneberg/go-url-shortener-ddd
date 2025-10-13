@@ -1,0 +1,36 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  BINARY: bin/shortener
+
+tasks:
+  run:
+    desc: Run the URL shortener service
+    cmds:
+      - go run ./cmd/shortener
+
+  build:
+    desc: Build the URL shortener binary
+    cmds:
+      - mkdir -p bin
+      - go build -o {{.BINARY}} ./cmd/shortener
+
+  test:
+    desc: Run unit tests with race detector and coverage
+    cmds:
+      - go test -race -covermode=atomic -coverprofile=coverage.out ./...
+      - go tool cover -func=coverage.out | tail -n 1
+
+  lint:
+    desc: Run linters (golangci-lint if available, otherwise go vet + gofmt check)
+    cmds:
+      - go vet ./...
+      - go fmt ./...
+      - goimports -w .
+  
+  gen:
+    desc: Generate mocks
+    cmds:
+      - go generate ./...
