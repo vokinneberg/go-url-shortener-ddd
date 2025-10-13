@@ -7,14 +7,21 @@ import (
 	"net/http"
 	"net/url"
 
-	shortURL "github.com/vokinneberg/go-url-shortener-ddd/url"
+	shortenURL "github.com/vokinneberg/go-url-shortener-ddd/internal/url"
 )
 
-type Handler struct {
-	urlService *shortURL.URLService
+var _ Service = (*shortenURL.URLService)(nil)
+
+type Service interface {
+	Shorten(original string) (*shortenURL.URL, error)
+	Retrieve(id string) (*shortenURL.URL, error)
 }
 
-func NewHandler(svc *shortURL.URLService) *http.ServeMux {
+type Handler struct {
+	urlService Service
+}
+
+func NewHandler(svc Service) *http.ServeMux {
 	handler := &Handler{
 		urlService: svc,
 	}
@@ -62,7 +69,7 @@ func (h *Handler) getURL(w http.ResponseWriter, r *http.Request) {
 	}
 	shortURL := r.PathValue("id")
 
-	origURL, err := h.urlService.Find(shortURL)
+	origURL, err := h.urlService.Retrieve(shortURL)
 	if err != nil {
 		http.Error(w, "URL not found", http.StatusNotFound)
 		return
